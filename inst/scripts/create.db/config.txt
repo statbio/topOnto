@@ -1,5 +1,3 @@
-
-
 PACKAGE_NAME=topOnto.HPO.db
 DBSCHEMA="HPO_DB"
 DBSCHEMAVERSION=1.0
@@ -9,14 +7,7 @@ SOURCEDATE=20150219
 VERSION=1.2
 OBO="/home/xin/Workspace/DisEnt/disent/data/hp.obo"
 
-PACKAGE_NAME=topOnto.HDO.db
-DBSCHEMA="HDO_DB"
-DBSCHEMAVERSION=1.0
-SOURCENAME="HDO"
-SOURCURL="http://www.obofoundry.org/cgi-bin/detail.cgi?id=disease_ontology"
-SOURCEDATE=20150219
-VERSION=1.2
-OBO="/home/xin/Workspace/DisEnt/disent/data/doid_addall.obo"
+
 
 PACKAGE_NAME=topOnto.SBO.db
 DBSCHEMA="SBO_DB"
@@ -68,8 +59,6 @@ OBO="/home/xin/Desktop/colin/neuro.obo"
 
 
 
-
-
 PACKAGE_NAME=topOnto.GOMF.db
 DBSCHEMA="GOMF_DB"
 DBSCHEMAVERSION=1.0
@@ -96,4 +85,73 @@ SOURCURL="-"
 SOURCEDATE=20150820
 VERSION=1.0
 OBO="/home/xin/Workspace/DisEnt/disent/data/GOBP.obo"
+
+PACKAGE_NAME=topOnto.HDO.db
+DBSCHEMA="HDO_DB"
+DBSCHEMAVERSION=1.0
+SOURCENAME="HDO"
+SOURCURL="http://www.obofoundry.org/cgi-bin/detail.cgi?id=disease_ontology"
+SOURCEDATE=20150219
+VERSION=1.2
+OBO="/home/xin/Workspace/DisEnt/disent/data/doid_addall.obo"
+
+
+
+
+
+PACKAGE_NAME=topOnto.RECTOMEPATHWAY.db
+DBSCHEMA="RECTOMEPATHWAY_DB"
+DBSCHEMAVERSION=1.0
+SOURCENAME="RECTOMEPATHWAY"
+SOURCURL="-"
+SOURCEDATE=20160217
+VERSION=1.0
+OBO="/home/xin/Workspace/DisEnt/disent/data/reactomePathway.obo"
+
+PACKAGE_NAME=topOnto.GOBP.db
+DBSCHEMA="GOBP_DB"
+DBSCHEMAVERSION=1.0
+SOURCENAME="GOBP"
+SOURCURL="-"
+SOURCEDATE=20160205
+VERSION=1.0
+OBO="/home/xin/Workspace/DisEnt/disent/data/GOBP20160205.obo"
+
+
+PACKAGE_NAME=topOnto.HDO.db
+DBSCHEMA="HDO_DB"
+DBSCHEMAVERSION=1.0
+SOURCENAME="HDO"
+SOURCURL="http://purl.obolibrary.org/obo/doid.obo"
+SOURCEDATE=20151204
+VERSION=1.2
+OBO="/home/xin/Workspace/DisEnt/disent/data/hdo20151204.obo"
+
+PACKAGE_NAME=topOnto.HPO.db
+DBSCHEMA="HPO_DB"
+DBSCHEMAVERSION=1.0
+SOURCENAME="HPO"
+SOURCURL="http://purl.obolibrary.org/obo/hp.obo"
+SOURCEDATE=20151204
+VERSION=1.2
+OBO="/home/xin/Workspace/DisEnt/disent/data/hpo20151204.obo"
+
+PACKAGE_NAME=topOnto.PANTHERPROTEIN.db
+DBSCHEMA="PANTHERPROTEIN_DB"
+DBSCHEMAVERSION=1.0
+SOURCENAME="PANTHERPROTEIN"
+SOURCURL="http://data.pantherdb.org/PANTHER10.0/ontology/Protein_Class_7.0"
+SOURCEDATE=20151204
+VERSION=1.2
+OBO="/home/xin/Workspace/DisEnt/disent/data/pantherProtein.obo"
+
+PACKAGE_NAME=topOnto.CHROMOSOME.db
+DBSCHEMA="CHROMOSOME_DB"
+DBSCHEMAVERSION=1.0
+SOURCENAME="CHROMOSOME"
+SOURCURL="-"
+SOURCEDATE=20151204
+VERSION=1.2
+OBO="/home/xin/Workspace/DisEnt/disent/data/Chromosome.obo"
+
 

@@ -81,7 +81,7 @@
 #'   A named(GO identifiers) list of character vectors. 
 #' @author Adrian Alexa
 #' @seealso
-#'   \code{\link{topGOdata-class}}
+#'   \code{\link{topONTdata-class}}
 #' 
 #' @examples
 #' 
@@ -125,7 +125,7 @@
 #' geneList <- factor(as.integer(allGenes %in% myInterestedGenes))
 #' names(geneList) <- allGenes
 #' 
-#' GOdata <- new("topGOdata",
+#' GOdata <- new("topONTdata",
 #'               ontology = "BP",
 #'               allGenes = geneList,
 #'               nodeSize = 5,
@@ -156,91 +156,169 @@ readMappings <- function(file, sep = "\t", IDsep = ",") {
   return(lapply(map, function(x) gsub(" ", "", strsplit(x, split = IDsep)[[1]])))
 }
 
+
+readMappingswithScore<-function(file){
+  # con = dbConnect(drv="SQLite", dbname="~/disent/data/DisEnt20160105.sqlite")
+  # tb<-dbGetQuery( con,"select * from human_gene2HDO")
+  # g2d<-tb[1:50,]
+  g2d<-read.table(file,header=T,sep='\t',stringsAsFactors = F)
+  weight <- rbind(c(0.06,0.06,0.2),
+                  c(0.06,0.06,0.2),
+                  c(0.06,0.06,0.2))
+  rownames(weight) <- c("o", "g", "v")
+  colnames(weight) <- c("m", "n", "m,n")
+  cat('weight matrix:')
+  print(weight)
+  
+  f<-function(n,k=0.2){
+    n<-as.numeric(n)
+    n/(n+k)
+  }
+  weighted.g2d=list()
+  
+  index<-grep(',',g2d$source)
+  new<-data.frame()
+  for(i in index){
+    sources<-strsplit(g2d[i,]$source,',')[[1]]
+    t<-g2d[rep(i,length(sources)),]
+    t$source<-sources
+    t$source_count=1
+    t$evidence_dist<-strsplit(g2d[i,]$evidence_dist,',')[[1]]
+    new<-rbind(new,t)
+  }
+  
+  
+  g2d<-rbind(g2d[-index,],new)
+  require(plyr)
+  tmp<-ddply(g2d, c( "entrez_id", "term_id","source","source_count","mappting_tool"),  summarise,
+             evidence   = sum(as.numeric(evidence)),
+             evidence_dist = sum(as.numeric(evidence_dist)))
+  
+  tmp$score<-apply(tmp,MARGIN = 1,function(x){
+    weight[x['source'],x['mappting_tool']]*f(x['evidence'])
+  })
+  
+  df.score<-ddply(tmp, c( "entrez_id", "term_id"),  summarise,
+                  score   = sum(as.numeric(score)))
+  gs<-as.character(unique(df.score$entrez_id))
+  
+  for(j in gs){
+    df.tmp<-df.score[df.score$entrez_id==j,]
+    v<-as.character(df.tmp$term_id)
+    names(v)<-round(df.tmp$score,digits = 3)
+    weighted.g2d[[j]]<-v
+  }
+  
+  weighted.g2d
+}
+
+revmapWithScore<-function(a){
+  ##init score to 1 if not score is provided
+  if(is.null(names(a[[1]]))){
+    a<-lapply(a, function(x){
+      names(x)<-rep(1,length(x))
+      x
+    })
+  }
+  y<-split(f=unlist(a),x=names(unlist(a)))
+  
+  y<-lapply(y,function(x){
+    x=sub('.',replacement = '/',x,fixed = T)
+    gene.weight<-strsplit(x,split=c('/'),fixed=T)
+    genes<-sapply(gene.weight,function(x){x[1]})
+    weights<-sapply(gene.weight,function(x){x[2]})
+    names(genes)<-weights
+    genes
+  })
+  y
+}
+
+
 ##not implemented
 ## function annFUN.org() to work with the "org.XX.eg" annotations
-annFUN.org <- function( feasibleGenes = NULL, mapping, ID = "entrez") {
-# 
-#   tableName <- c("genes", "accessions", "alias", "ensembl",
-#                  "gene_info", "gene_info", "unigene")
-#   keyName <- c("gene_id", "accessions", "alias_symbol", "ensembl_id",
-#                "symbol", "gene_name", "unigene_id")
-#   names(tableName) <- names(keyName) <- c("entrez", "genbank", "alias", "ensembl",
-#                                           "symbol", "genename", "unigene")
-#   
-#   
-#   ## we add the .db ending if needed 
-#   mapping <- paste(sub(".db$", "", mapping), ".db", sep = "")
-#   require(mapping, character.only = TRUE) || stop(paste("package", mapping, "is required", sep = " "))
-#   mapping <- sub(".db$", "", mapping)
-#   
-#   geneID <- keyName[tolower(ID)]
-#   .sql <- paste("SELECT DISTINCT ", geneID, ", go_id FROM ", tableName[tolower(ID)],
-#                 " INNER JOIN ", paste("go", tolower(whichOnto), sep = "_"),
-#                 " USING(_id)", sep = "")
-#   retVal <- dbGetQuery(get(paste(mapping, "dbconn", sep = "_"))(), .sql)
-#   
-#   ## restric to the set of feasibleGenes
-#   if(!is.null(feasibleGenes))
-#     retVal <- retVal[retVal[[geneID]] %in% feasibleGenes, ]
-#   
-#   ## split the table into a named list of GOs
-#   return(split(retVal[[geneID]], retVal[["go_id"]]))
+annFUN.org <- function( feasibleGenes = NULL, mapping, ID = "entrez",whichOnto = 'BP') {
+  
+  tableName <- c("genes", "accessions", "alias", "ensembl",
+                 "gene_info", "gene_info", "unigene")
+  keyName <- c("gene_id", "accessions", "alias_symbol", "ensembl_id",
+               "symbol", "gene_name", "unigene_id")
+  names(tableName) <- names(keyName) <- c("entrez", "genbank", "alias", "ensembl",
+                                          "symbol", "genename", "unigene")
+  
+  
+  ## we add the .db ending if needed 
+  mapping <- paste(sub(".db$", "", mapping), ".db", sep = "")
+  require(mapping, character.only = TRUE) || stop(paste("package", mapping, "is required", sep = " "))
+  mapping <- sub(".db$", "", mapping)
+  
+  geneID <- keyName[tolower(ID)]
+  .sql <- paste("SELECT DISTINCT ", geneID, ", go_id FROM ", tableName[tolower(ID)],
+                " INNER JOIN ", paste("go", tolower(whichOnto), sep = "_"),
+                " USING(_id)", sep = "")
+  retVal <- dbGetQuery(get(paste(mapping, "dbconn", sep = "_"))(), .sql)
+  
+  ## restric to the set of feasibleGenes
+  if(!is.null(feasibleGenes))
+    retVal <- retVal[retVal[[geneID]] %in% feasibleGenes, ]
+  
+  ## split the table into a named list of GOs
+  return(split(retVal[[geneID]], retVal[["go_id"]]))
 }
 
 
 ##not implemented
 annFUN.db <- function( feasibleGenes = NULL, affyLib) {
-# 
-#   ## we add the .db ending if needed 
-#   affyLib <- paste(sub(".db$", "", affyLib), ".db", sep = "")
-#   require(affyLib, character.only = TRUE) || stop(paste("package", affyLib, "is required", sep = " "))
-#   affyLib <- sub(".db$", "", affyLib)
-# 
-#   orgFile <- get(paste(get(paste(affyLib, "ORGPKG", sep = "")), "_dbfile", sep = ""))
-#   
-#   try(dbGetQuery(get(paste(affyLib, "dbconn", sep = "_"))(),
-#                  paste("ATTACH '", orgFile(), "' as org;", sep ="")),
-#       silent = TRUE)
-#   
-#   .sql <- paste("SELECT DISTINCT probe_id, go_id FROM probes INNER JOIN ",
-#                 "(SELECT * FROM org.genes INNER JOIN org.go_",
-#                 tolower(whichOnto)," USING('_id')) USING('gene_id');", sep = "")
-# 
-#   retVal <- dbGetQuery(get(paste(affyLib, "dbconn", sep = "_"))(), .sql)
-# 
-#   ## restric to the set of feasibleGenes
-#   if(!is.null(feasibleGenes))
-#     retVal <- retVal[retVal[["probe_id"]] %in% feasibleGenes, ]
-#   
-#   ## split the table into a named list of GOs
-#   return(split(retVal[["probe_id"]], retVal[["go_id"]]))
+
+  ## we add the .db ending if needed 
+  affyLib <- paste(sub(".db$", "", affyLib), ".db", sep = "")
+  require(affyLib, character.only = TRUE) || stop(paste("package", affyLib, "is required", sep = " "))
+  affyLib <- sub(".db$", "", affyLib)
+
+  orgFile <- get(paste(get(paste(affyLib, "ORGPKG", sep = "")), "_dbfile", sep = ""))
+  
+  try(dbGetQuery(get(paste(affyLib, "dbconn", sep = "_"))(),
+                 paste("ATTACH '", orgFile(), "' as org;", sep ="")),
+      silent = TRUE)
+  
+  .sql <- paste("SELECT DISTINCT probe_id, go_id FROM probes INNER JOIN ",
+                "(SELECT * FROM org.genes INNER JOIN org.go_",
+                tolower(whichOnto)," USING('_id')) USING('gene_id');", sep = "")
+
+  retVal <- dbGetQuery(get(paste(affyLib, "dbconn", sep = "_"))(), .sql)
+
+  ## restric to the set of feasibleGenes
+  if(!is.null(feasibleGenes))
+    retVal <- retVal[retVal[["probe_id"]] %in% feasibleGenes, ]
+  
+  ## split the table into a named list of GOs
+  return(split(retVal[["probe_id"]], retVal[["go_id"]]))
 }
 
 
 ##not implemented
 annFUN <- function( feasibleGenes = NULL, affyLib) {
     
-#   require(affyLib, character.only = TRUE) || stop(paste('package', affyLib, 'is required', sep = " "))
-#   mapping <- get(paste(affyLib, 'GO2PROBE', sep = ''))
-# 
-#   if(is.null(feasibleGenes))
-#     feasibleGenes <- ls(get(paste(affyLib, 'ACCNUM', sep = '')))
-#       
-#   ontoGO <- get("Term",envir=.GlobalEnv)
-#   goodGO <- intersect(ls(ontoGO), ls(mapping))
-# 
-#   GOtoAffy <- lapply(mget(goodGO, envir = mapping, ifnotfound = NA),
-#                      intersect, feasibleGenes)
-#   
-#   emptyTerms <- sapply(GOtoAffy, length) == 0
-# 
-#   return(GOtoAffy[!emptyTerms])
+  require(affyLib, character.only = TRUE) || stop(paste('package', affyLib, 'is required', sep = " "))
+  mapping <- get(paste(affyLib, 'GO2PROBE', sep = ''))
+
+  if(is.null(feasibleGenes))
+    feasibleGenes <- ls(get(paste(affyLib, 'ACCNUM', sep = '')))
+      
+  ontoGO <- get("Term",envir=.GlobalEnv)
+  goodGO <- intersect(ls(ontoGO), ls(mapping))
+
+  GOtoAffy <- lapply(mget(goodGO, envir = mapping, ifnotfound = NA),
+                     intersect, feasibleGenes)
+  
+  emptyTerms <- sapply(GOtoAffy, length) == 0
+
+  return(GOtoAffy[!emptyTerms])
 }
 
 
 ## the annotation function
 annFUN.gene2GO <- function( feasibleGenes = NULL, gene2GO) {
-
+#browser()
   ## GO terms annotated to the specified ontology 
   #ontoGO <- get(paste("GO", whichOnto, "Term", sep = ""))
   ontoGO <- get("Term",envir=.GlobalEnv)
@@ -263,6 +341,35 @@ annFUN.gene2GO <- function( feasibleGenes = NULL, gene2GO) {
   return(split(geneID[goodGO], allGO[goodGO]))
 }
 
+## the annotation function
+annFUN.gene2GO.Score <- function( feasibleGenes = NULL, gene2GO) {
+  #browser()
+  ## GO terms annotated to the specified ontology 
+  #ontoGO <- get(paste("GO", whichOnto, "Term", sep = ""))
+  ontoGO <- get("Term",envir=.GlobalEnv)
+  
+  ## Restrict the mappings to the feasibleGenes set  
+  if(!is.null(feasibleGenes))
+    gene2GO <- gene2GO[intersect(names(gene2GO), feasibleGenes)]
+  
+  ## Throw-up the genes which have no annotation
+  if(any(is.na(gene2GO)))
+    gene2GO <- gene2GO[!is.na(gene2GO)]
+  
+  gene2GO <- gene2GO[sapply(gene2GO, length) > 0]
+  
+  ##init score to 1 if not score is provided
+  if(is.null(names(gene2GO[[1]]))){
+    gene2GO<-lapply(gene2GO, function(x){
+      names(x)<-rep(1,length(x))
+      x
+      })
+  }
+  
+  GO2gene<-revmapWithScore(gene2GO)
+  GO2gene<-GO2gene[-(names(GO2gene) %in% ls(ontoGO))]
+  return(GO2gene)
+}
 
 ## the annotation function
 annFUN.GO2genes <- function( feasibleGenes = NULL, GO2genes) {
@@ -280,6 +387,7 @@ annFUN.GO2genes <- function( feasibleGenes = NULL, GO2genes) {
 
   return(GO2genes[sapply(GO2genes, length) > 0])
 }
+
 
 
 ## annotation function to read the mappings from a file
@@ -344,18 +452,33 @@ parseGeneOntologyAnnotation<-function(file='/home/xin/Desktop/colin/GO_annotatio
 
 
 ##We have human annotation data, we want to map thm to fly through human_fly_one2one_ortholog
-mapAnnotationToSpecies.fly<-function(human_file=system.file("extdata/annotation","human_gene2HDO", package ="topOnto"),output){
+mapAnnotationToSpecies.fly<-function(human_file=system.file("extdata/annotation","human_gene2HDO", package ="topOnto"),orthology.type=c(1,2),output){
+  #orthology.type=1,2,3
+  #one2one one2many many2many
   require('idbox')
-  ls('package:idbox')
-  h2f_one2one<-find_one2one_orthologs_Human2Fly()
+  #ls('package:idbox')
+  h2f<-human2fly()
+  types=c('ortholog_one2one','ortholog_one2many','ortholog_many2many')[orthology.type]
+  h2f<-h2f[h2f$dmelanogaster_homolog_orthology_type %in% types,]
   geneID2TERM <- readMappings(human_file)
   n<-names(geneID2TERM)
   #keep only those have fly orthology
-  geneID2TERM<-geneID2TERM[n %in% h2f_one2one$human_entrezgene]
-  index<-match(names(geneID2TERM),h2f_one2one$human_entrezgene)
-  fly<-h2f_one2one[index,"fly_entrezgene"]
-  geneID2TERM.fly <- geneID2TERM
-  names(geneID2TERM.fly)<-fly
+  geneID2TERM<-geneID2TERM[n %in% h2f$human_entrez_id]
+  
+  h2f.entrez<-h2f$fly_entrez_id
+  names(h2f.entrez)<-h2f$human_entrez_id
+  human2fly.list<-lapply(split(h2f.entrez,names(h2f.entrez)),unname)
+  TERM2geneID<-revmap(geneID2TERM)
+  TERM2geneID.fly<-lapply(TERM2geneID,function(x){
+    new<-c()
+    for(i in x){
+      new<-c(human2fly.list[[i]],new)
+    }
+    unique(new)
+  })
+  geneID2TERM.fly<-revmap(TERM2geneID.fly)
+  
+  #mapply(c,test,test)
   sink(output)
   for(i in names(geneID2TERM.fly)){
     cat(paste(i,paste(geneID2TERM.fly[[i]],collapse=','),sep="\t"))
@@ -364,8 +487,116 @@ mapAnnotationToSpecies.fly<-function(human_file=system.file("extdata/annotation"
   sink()
 }
 
+mapAnnotationToSpecies.score.fly<-function(human_file=system.file("extdata/annotation","human_gene2HDO_score", package ="topOnto"),orthology.type=c(1,2),output){
+  require('idbox')
+  h2f<-human2fly()
+  types=c('ortholog_one2one','ortholog_one2many','ortholog_many2many')[orthology.type]
+  h2f<-h2f[h2f$dmelanogaster_homolog_orthology_type %in% types,]
+  geneID2TERM <- read.table(human_file,header=T,sep='\t',colClasses = "character")
+  n<-geneID2TERM$entrez_id
+  #keep only those have fly orthology
+  geneID2TERM<-geneID2TERM[n %in% h2f$human_entrez_id,]
+  
+  h2f.entrez<-h2f$fly_entrez_id
+  names(h2f.entrez)<-h2f$human_entrez_id
+  human2fly.list<-lapply(split(h2f.entrez,names(h2f.entrez)),unname)
+  require(AnnotationDbi)
+  fly2human.list<-revmap(human2fly.list)
+  
+  df<-data.frame()
+  for(i in names(fly2human.list)){
+    h.gene<-fly2human.list[[i]]
+    tmp<-geneID2TERM[geneID2TERM$entrez_id %in% h.gene,]
+    if(nrow(tmp)>0){
+      tmp$entrez_id=c(i)
+      df<-rbind(df,tmp)
+    }
+  }
+  library(plyr)
+  f<-function(x){
+    if(length(grep(',',x))!=0){
+      y<-strsplit(x,split =',')
+      paste(apply(as.data.frame(y),MARGIN = 1,function(x){sum(as.numeric(x))}),collapse = ',')
+    }else{
+      sum(as.numeric(x))
+    }}
+    
+  df2<-ddply(df, c( "entrez_id", "term_id","source","source_count","mappting_tool"),  summarise,
+        evidence   = sum(as.numeric(evidence)),
+        evidence_dist = f(evidence_dist)
+  )
+  
+  
+  
+  write.table(df2,file = out,quote = FALSE,sep = '\t',row.names = F)
+
+}
+
 
 ###list all available annotation file
 list.annotation<-function(){
   list.files(path=system.file("extdata/annotation", package ="topOnto"))
+}
+
+filter.ontology.annotation<-function(terms,term2genes){
+  term2genes[which(names(term2genes) %in% terms)]
+}
+
+
+####find annotation reference
+list.reference<-function(gene='7157',term='DOID:1612',db='/home/xin/Workspace/DisEnt/disent/data/DisEnt20160105.sqlite',ont='HDO',max.char=100,print=T){
+  library("RSQLite")
+  con = dbConnect(drv="SQLite", dbname=db)
+  alltables = dbListTables(con)
+  geneID2TERM <- readRDS(system.file("extdata/annotation","human_gene2HDO_weighted_g2t.Rds", package ="topOnto"))
+  
+  if(length(grep('[a-zA-Z]',gene,perl = T))>0){
+    require(org.Hs.eg.db)
+    ls("package:org.Hs.eg.db")
+    symbol<-gene
+    gene<-as.list(org.Hs.egSYMBOL2EG)[[gene]]
+  }else{
+    require(org.Hs.eg.db)
+    ls("package:org.Hs.eg.db")
+    symbol<-as.list(org.Hs.egSYMBOL)[[as.character(gene)]]
+  }
+  
+  tb.gene2HDO<-dbGetQuery( con,paste('select * from ',paste('human_gene2',ont,sep = ''),' where entrez_id=\'',gene,'\' and term_id=\'',term,'\'',sep = ''))
+  score<-as.numeric(names(geneID2TERM[[as.character(gene)]][geneID2TERM[[as.character(gene)]]==term]))
+  tb.GENERIF<-dbGetQuery( con,paste('select * from ',paste('gene2',ont,'_GENERIF',sep = ''),' where entrez_id=\'',gene,'\' and term_id=\'',term,'\'',sep = ''))
+  tb.OMIM<-dbGetQuery( con,paste('select * from ',paste('gene2',ont,'_OMIM',sep = ''),' where entrez_id=\'',gene,'\' and term_id=\'',term,'\'',sep = ''))
+  tb.VAR<-dbGetQuery( con,paste('select * from ',paste('gene2',ont,'_VAR',sep = ''),' where entrez_id=\'',gene,'\' and term_id=\'',term,'\'',sep = ''))
+  
+  if(nrow(tb.gene2HDO)>0) tb.gene2HDO else tb.gene2HDO<-NULL
+  if(nrow(tb.GENERIF)>0) tb.GENERIF else tb.GENERIF<-NULL
+  if(nrow(tb.OMIM)>0) tb.OMIM else tb.OMIM<-NULL
+  if(nrow(tb.VAR)>0) tb.VAR else tb.VAR<-NULL
+  
+  library(package=paste('topOnto.',ont,'.db',sep = ''),character.only = T)
+  names(symbol)<-gene
+  # c(gene,term,Term(ONTTERM)[term])
+  # 
+  # 
+  # c(symbol,Term(ONTTERM)[term],score=score)
+  # tb.gene2HDO[,c(1,2,3,5,6)]
+  
+  if(!is.null(tb.GENERIF)){
+  index<-which(nchar(tb.GENERIF$rif)>max.char)
+  tb.GENERIF$rif<-substr(tb.GENERIF$rif,1,max.char)
+  tb.GENERIF$rif[index]<-paste(tb.GENERIF$rif[index],'...',sep = '')}
+  # tb.GENERIF[,c(1,4,5,2,3,6)]
+  
+  if(print){
+    print(c(symbol,Term(ONTTERM)[term],score=score))
+    cat('##############Overview\n')
+    print(tb.gene2HDO[,c(1,2,3,5,6)])
+    cat('##############OMIM\n')
+    print(tb.OMIM[,c(2,7,8,1,3,4,5,9)])
+    cat('##############GENERIF\n')
+    print(head(tb.GENERIF[,c(1,4,5,2,3,6)]))
+    cat('...\n')
+    cat('##############ENSEMBL VARIATION\n')
+    print(head(tb.VAR[,c('entrez_id','term_id','term_name','variation_id','relative_position','phenotype_description','mapping_tool')]))
+  }
+  return(list(basic=c(symbol,Term(ONTTERM)[term],score=score),hdgdb=tb.gene2HDO,tb.GENERIF=tb.GENERIF,tb.OMIM=tb.OMIM,tb.VAR=tb.VAR))
 }

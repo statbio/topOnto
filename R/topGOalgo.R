@@ -5,20 +5,22 @@
 ## High-level function for runing the GO algorithms
 
 
-.algoComp <- rbind(c(1, 0, 1, 1, 1, 0, 1, 1),
-                   c(1, 0, 1, 1, 1, 0, 1, 1),
-                   c(1, 0, 0, 0, 0, 0, 0, 0),
-                   c(1, 0, 1, 1, 1, 0, 1, 1),
-                   c(1, 0, 1, 1, 1, 0, 1, 1),
-                   c(1, 0, 0, 0, 0, 0, 0, 0))
-rownames(.algoComp) <- c("classic", "elim", "weight", "weight01", "lea", "parentchild")
-colnames(.algoComp) <- c("fisher", "z", "ks", "t", "globaltest", "category", "sum", "ks.ties")
+.algoComp <- rbind(c(1, 0, 1, 1, 1, 0, 1, 1, 0),
+                   c(1, 0, 1, 1, 1, 0, 1, 1, 0),
+                   c(1, 0, 0, 0, 0, 0, 0, 0, 0),
+                   c(1, 0, 1, 1, 1, 0, 1, 1, 0),
+                   c(1, 0, 1, 1, 1, 0, 1, 1, 0),
+                   c(1, 0, 0, 0, 0, 0, 0, 0, 0),
+                   c(0, 0, 0, 0, 0, 0, 0, 0, 1),
+                   c(0, 0, 0, 0, 0, 0, 0, 0, 1))
+rownames(.algoComp) <- c("classic", "elim", "weight", "weight01", "lea", "parentchild",'classicgsea','elimgsea')
+colnames(.algoComp) <- c("fisher", "z", "ks", "t", "globaltest", "category", "sum", "ks.ties","ks.csw")
 
-.testNames <- c("GOFisherTest" , "GOKSTest", "GOtTest", "GOglobalTest", "GOSumTest", "GOKSTiesTest")
-names(.testNames) <- c("fisher", "ks", "t", "globaltest", "sum", "ks.ties")
+.testNames <- c("GOFisherTest" , "GOKSTest", "GOtTest", "GOglobalTest", "GOSumTest", "GOKSTiesTest","GOKSCSWTest")
+names(.testNames) <- c("fisher", "ks", "t", "globaltest", "sum", "ks.ties","ks.csw")
 
-.algoClass <- c("classic", "elim", "weight", "weight01", "lea", "parentchild")
-names(.algoClass) <- c("classic", "elim", "weight", "weight01", "lea", "parentchild")
+.algoClass <- c("classic", "elim", "weight", "weight01", "lea", "parentchild","classicgsea","elimgsea")
+names(.algoClass) <- c("classic", "elim", "weight", "weight01", "lea", "parentchild","classicgsea","elimgsea")
 
 
 ## functions to extract the information from the .algoComp
@@ -30,21 +32,21 @@ whichTests <- function() {
   colnames(.algoComp)[colSums(.algoComp) > 0]
 }
 
-## function runTest(topGOdata, "elim", "KS", ...)
+## function runTest(topONTdata, "elim", "KS", ...)
 ## ... are parameters for the test statistic
 
 #' @name getSigGroups
 #' @rdname getSigGroups
 #' @title Interfaces for running the enrichment tests
-#' @aliases getSigGroups runTest getSigGroups-methods getSigGroups,topGOdata,classicCount-method getSigGroups,topGOdata,classicScore-method getSigGroups,topGOdata,classicExpr-method getSigGroups,topGOdata,leaCount-method getSigGroups,topGOdata,leaScore-method getSigGroups,topGOdata,leaExpr-method getSigGroups,topGOdata,elimCount-method getSigGroups,topGOdata,elimScore-method getSigGroups,topGOdata,elimExpr-method getSigGroups,topGOdata,weightCount-method getSigGroups,topGOdata,weight01Count-method getSigGroups,topGOdata,weight01Score-method getSigGroups,topGOdata,weight01Expr-method getSigGroups,topGOdata,parentChild-method getSigGroups,topGOdata,pC-method runTest,topGOdata,character,character-method runTest,topGOdata,missing,character-method whichAlgorithms whichTests
-#' @description These function are used for dispatching the specific algorithm for a given \code{topGOdata} object and a test statistic.
+#' @aliases getSigGroups runTest getSigGroups-methods getSigGroups,topONTdata,classicCount-method getSigGroups,topONTdata,classicScore-method getSigGroups,topONTdata,classicExpr-method getSigGroups,topONTdata,leaCount-method getSigGroups,topONTdata,leaScore-method getSigGroups,topONTdata,leaExpr-method getSigGroups,topONTdata,elimCount-method getSigGroups,topONTdata,elimScore-method getSigGroups,topONTdata,elimExpr-method getSigGroups,topONTdata,weightCount-method getSigGroups,topONTdata,weight01Count-method getSigGroups,topONTdata,weight01Score-method getSigGroups,topONTdata,weight01Expr-method getSigGroups,topONTdata,parentChild-method getSigGroups,topONTdata,pC-method runTest,topONTdata,character,character-method runTest,topONTdata,missing,character-method whichAlgorithms whichTests
+#' @description These function are used for dispatching the specific algorithm for a given \code{topONTdata} object and a test statistic.
 #' @usage
 #' getSigGroups(object, test.stat, ...)
 #' runTest(object, algorithm, statistic, ...)
 #' whichAlgorithms()
 #' whichTests()
 #' 
-#' @param object An object of class \code{topGOdata} This object contains all data necessary for runnig the test. 
+#' @param object An object of class \code{topONTdata} This object contains all data necessary for runnig the test. 
 #' @param test.stat An object of class \code{groupStats}. This object defines the test statistic.
 #' @param algorithm Character string specifing which algorithm to use.   
 #' @param statistic Character string specifing which test to use.    
@@ -62,19 +64,19 @@ whichTests <- function() {
 #'   ...
 #' 
 #' 
-#' @return An object of class \code{topGOresult}
+#' @return An object of class \code{topONTresult}
 #' @author Adrian Alexa
 #' 
 #' @seealso
-#'   \code{\link{topGOdata-class}},
+#'   \code{\link{topONTdata-class}},
 #'   \code{\link{groupStats-class}},
-#'   \code{\link{topGOresult-class}}
+#'   \code{\link{topONTresult-class}}
 #' 
 #' 
 #' 
 #' @examples
 #' 
-#' ## load a sample topGOdata object
+#' ## load a sample topONTdata object
 #' data(ONTdata)
 #' GOdata
 #' 
@@ -113,9 +115,9 @@ if(!isGeneric("runTest"))
   setGeneric("runTest", function(object, algorithm, statistic, ...) standardGeneric("runTest"))
 
 setMethod("runTest",
-          signature(object = "topGOdata", algorithm = "character", statistic = "character"),
+          signature(object = "topONTdata", algorithm = "character", statistic = "character"),
           function(object, algorithm, statistic, ...) { ## ... parameters for the test statistic
-
+            #browser()
             statistic <- tolower(statistic)
             algorithm <- tolower(algorithm)
             ## we check if the algorithm support the given test statistic
@@ -124,9 +126,11 @@ setMethod("runTest",
 
             algorithm <- .algoClass[algorithm]
             ## strong asumtions! 
-            if(algorithm == "parentchild")
+            if(algorithm == "parentchild"){
               testType <- "pC"
-            else {
+            }else if(grepl('gsea',ignore.case = T,algorithm)){
+              testType <-paste(sub(pattern = 'gsea',replacement = '',ignore.case = T,algorithm),'Gsea',sep = '')
+            }else{
               testType <- as.character(findMethodSignatures(.testNames[statistic]))
               testType <- sub("classic", algorithm, testType) 
             }
@@ -143,7 +147,7 @@ setMethod("runTest",
 
 ## dispatch method for weight01 (or topGO) algorithm - the default algorithm
 setMethod("runTest",
-          signature(object = "topGOdata", algorithm = "missing", statistic = "character"),
+          signature(object = "topONTdata", algorithm = "missing", statistic = "character"),
           function(object, statistic, ...) { ## ... parameters for the test statistic
             return(runTest(object, "weight01", statistic, ...))
           })
@@ -162,7 +166,7 @@ if(!isGeneric("getSigGroups"))
 ########################## CLASSIC algorithm ##########################
 ## dispatch method for classic algorithm
 setMethod("getSigGroups",
-          signature(object = "topGOdata", test.stat = "classicCount"),
+          signature(object = "topONTdata", test.stat = "classicCount"),
           function(object, test.stat) { ## ... parameters for each algorithm
             
             ## update the test.stat object
@@ -196,7 +200,7 @@ setMethod("getSigGroups",
             ## STORE THE RESULTS
             .whichAlgorithm <- "classic"
             attr(.whichAlgorithm, "testClass") <- as.character(class(test.stat))
-            return(new("topGOresult",
+            return(new("topONTresult",
                        description = paste(description(object), "\nOntology:", ontology(object), sep = " "),
                        score = algoRes, testName = Name(test.stat),
                        algorithm = .whichAlgorithm,
@@ -204,9 +208,9 @@ setMethod("getSigGroups",
           })
 
 setMethod("getSigGroups",
-          signature(object = "topGOdata", test.stat = "classicScore"),
+          signature(object = "topONTdata", test.stat = "classicScore"),
           function(object, test.stat) {
-
+            
             ## update the test.stat object if there is the case
             if(length(allScore(test.stat)) == 0) {
               allMembers(test.stat) <- genes(object)
@@ -225,7 +229,7 @@ setMethod("getSigGroups",
             ## STORE THE RESULTS
             .whichAlgorithm <- "classic"
             attr(.whichAlgorithm, "testClass") <- as.character(class(test.stat))
-            return(new("topGOresult",
+            return(new("topONTresult",
                        description = paste(description(object), "\nOntology:", ontology(object), sep = " "),
                        score = algoRes, testName = Name(test.stat),
                        algorithm = .whichAlgorithm,
@@ -234,7 +238,7 @@ setMethod("getSigGroups",
 
 
 setMethod("getSigGroups",
-          signature(object = "topGOdata", test.stat = "classicExpr"),
+          signature(object = "topONTdata", test.stat = "classicExpr"),
           function(object, test.stat) {
 
             if(length(allMembers(test.stat)) == 0)
@@ -250,7 +254,7 @@ setMethod("getSigGroups",
 
             .whichAlgorithm <- "classic"
             attr(.whichAlgorithm, "testClass") <- as.character(class(test.stat))
-            return(new("topGOresult",
+            return(new("topONTresult",
                        description = paste(description(object), "\nOntology:", ontology(object), sep = " "),
                        score = algoRes, testName = Name(test.stat),
                        algorithm = .whichAlgorithm,
@@ -260,12 +264,14 @@ setMethod("getSigGroups",
 
 
 
+
+
 ########################## ELIM algorithm ##########################
 ## dispatch method for elim algorithm
 ## to set the test statistic
 ## test.stat <- new("elimCount", testStatistic = GOFisherTest, cutOff = 0.05,  name = "Fisher test")
 setMethod("getSigGroups",
-          signature(object = "topGOdata", test.stat = "elimCount"),
+          signature(object = "topONTdata", test.stat = "elimCount"),
           function(object, test.stat, ...) { ## ... parameters for each algorithm
             
             ## update the test.stat object
@@ -301,7 +307,7 @@ setMethod("getSigGroups",
   
             .whichAlgorithm <- "elim"
             attr(.whichAlgorithm, "testClass") <- as.character(class(test.stat))
-            return(new("topGOresult",
+            return(new("topONTresult",
                        description = paste(description(object), "\nOntology:", ontology(object), sep = " "),
                        score = algoRes,
                        testName = paste(Name(test.stat), cutOff(test.stat), sep = " : "), 
@@ -311,9 +317,9 @@ setMethod("getSigGroups",
 
 
 setMethod("getSigGroups",
-          signature(object = "topGOdata", test.stat = "elimScore"),
+          signature(object = "topONTdata", test.stat = "elimScore"),
           function(object, test.stat, ...) { ## ... parameters for each algorithm
-
+            #browser()
             ## update the test.stat object if there is the case
             if(length(allScore(test.stat)) == 0) {
               allMembers(test.stat) <- genes(object)
@@ -333,7 +339,7 @@ setMethod("getSigGroups",
             
             .whichAlgorithm <- "elim"
             attr(.whichAlgorithm, "testClass") <- as.character(class(test.stat))
-            return(new("topGOresult",
+            return(new("topONTresult",
                        description = paste(description(object), "\nOntology:", ontology(object), sep = " "),
                        score = algoRes,
                        testName = paste(Name(test.stat), cutOff(test.stat), sep = " : "), 
@@ -344,7 +350,7 @@ setMethod("getSigGroups",
 
 
 setMethod("getSigGroups",
-          signature(object = "topGOdata", test.stat = "elimExpr"),
+          signature(object = "topONTdata", test.stat = "elimExpr"),
           function(object, test.stat, ...) { ## ... parameters for each algorithm
             
             ## update the test.stat object if there is the case
@@ -363,7 +369,7 @@ setMethod("getSigGroups",
             
             .whichAlgorithm <- "elim"
             attr(.whichAlgorithm, "testClass") <- as.character(class(test.stat))
-            return(new("topGOresult",
+            return(new("topONTresult",
                        description = paste(description(object), "\nOntology:", ontology(object), sep = " "),
                        score = algoRes,
                        testName = paste(Name(test.stat), cutOff(test.stat), sep = " : "), 
@@ -379,7 +385,7 @@ setMethod("getSigGroups",
 ## to set the test statistic
 ## test.stat <- new("weight01Count", testStatistic = GOFisherTest, name = "Fisher test")
 setMethod("getSigGroups",
-          signature(object = "topGOdata", test.stat = "weight01Count"),
+          signature(object = "topONTdata", test.stat = "weight01Count"),
           function(object, test.stat, ...) { ## ... parameters for each algorithm
             
             ## update the test.stat object
@@ -414,7 +420,7 @@ setMethod("getSigGroups",
   
             .whichAlgorithm <- "weight01"
             attr(.whichAlgorithm, "testClass") <- as.character(class(test.stat))
-            return(new("topGOresult",
+            return(new("topONTresult",
                        description = paste(description(object), "\nOntology:", ontology(object), sep = " "),
                        score = algoRes, testName = Name(test.stat),
                        algorithm = .whichAlgorithm,
@@ -424,7 +430,7 @@ setMethod("getSigGroups",
 
 
 setMethod("getSigGroups",
-          signature(object = "topGOdata", test.stat = "weight01Score"),
+          signature(object = "topONTdata", test.stat = "weight01Score"),
           function(object, test.stat, ...) { ## ... parameters for each algorithm
 
             ## update the test.stat object if there is the case
@@ -445,7 +451,7 @@ setMethod("getSigGroups",
             
             .whichAlgorithm <- "weight01"
             attr(.whichAlgorithm, "testClass") <- as.character(class(test.stat))
-            return(new("topGOresult",
+            return(new("topONTresult",
                        description = paste(description(object), "\nOntology:", ontology(object), sep = " "),
                        score = algoRes, testName = Name(test.stat),
                        algorithm = .whichAlgorithm,
@@ -454,7 +460,7 @@ setMethod("getSigGroups",
 
 
 setMethod("getSigGroups",
-          signature(object = "topGOdata", test.stat = "weight01Expr"),
+          signature(object = "topONTdata", test.stat = "weight01Expr"),
           function(object, test.stat, ...) { ## ... parameters for each algorithm
             
             ## update the test.stat object if there is the case
@@ -472,7 +478,7 @@ setMethod("getSigGroups",
             
             .whichAlgorithm <- "weight01"
             attr(.whichAlgorithm, "testClass") <- as.character(class(test.stat))
-            return(new("topGOresult",
+            return(new("topONTresult",
                        description = paste(description(object), "\nOntology:", ontology(object), sep = " "),
                        score = algoRes, testName = Name(test.stat),
                        algorithm = .whichAlgorithm,
@@ -485,7 +491,7 @@ setMethod("getSigGroups",
 ## to set the test statistic
 ## test.stat <- new("weightCount", testStatistic = GOFisherTest, name = "Fisher test", ...)
 setMethod("getSigGroups",
-          signature(object = "topGOdata", test.stat = "weightCount"),
+          signature(object = "topONTdata", test.stat = "weightCount"),
           function(object, test.stat, ...) { ## ... parameters for each algorithm
             
             ## update the test.stat object
@@ -520,7 +526,7 @@ setMethod("getSigGroups",
 
             .whichAlgorithm <- "weight"
             attr(.whichAlgorithm, "testClass") <- as.character(class(test.stat))
-            return(new("topGOresult",
+            return(new("topONTresult",
                        description = paste(description(object), "\nOntology:", ontology(object), sep = " "),
                        score = algoRes, testName = Name(test.stat),
                        algorithm = .whichAlgorithm,
@@ -535,7 +541,7 @@ setMethod("getSigGroups",
 ## to set the test statistic
 ## test.stat <- new("pC", testStatistic = GOFisherTest, joinFun = "intersect", name = "Fisher test")
 setMethod("getSigGroups",
-          signature(object = "topGOdata", test.stat = "pC"),
+          signature(object = "topONTdata", test.stat = "pC"),
           function(object, test.stat, ...) { ## ... parameters for each algorithm
             
             ## first take aside nodes that don't have any sig members
@@ -566,7 +572,7 @@ setMethod("getSigGroups",
   
             .whichAlgorithm <- "parentchild"
             attr(.whichAlgorithm, "testClass") <- as.character(class(test.stat))
-            return(new("topGOresult",
+            return(new("topONTresult",
                        description = paste(description(object), "\nOntology:", ontology(object), sep = " "),
                        score = algoRes, testName = Name(test.stat),
                        algorithm = .whichAlgorithm,
@@ -575,7 +581,7 @@ setMethod("getSigGroups",
 
 
 setMethod("getSigGroups",
-          signature(object = "topGOdata", test.stat = "parentChild"),
+          signature(object = "topONTdata", test.stat = "parentChild"),
           function(object, test.stat, ...) { ## ... parameters for each algorithm
             
             ## first take aside nodes that don't have any sig members
@@ -607,7 +613,7 @@ setMethod("getSigGroups",
 
             .whichAlgorithm <- "parentchild"
             attr(.whichAlgorithm, "testClass") <- as.character(class(test.stat))
-            return(new("topGOresult",
+            return(new("topONTresult",
                        description = paste(description(object), "\nOntology:", ontology(object), sep = " "),
                        score = algoRes, testName = Name(test.stat),
                        algorithm = .whichAlgorithm,
@@ -622,7 +628,7 @@ setMethod("getSigGroups",
 ## to set the test statistic
 ## test.stat <- new("leaCount", testStatistic = GOFisherTest, name = "Fisher test")
 setMethod("getSigGroups",
-          signature(object = "topGOdata", test.stat = "leaCount"),
+          signature(object = "topONTdata", test.stat = "leaCount"),
           function(object, test.stat, ...) { ## ... parameters for each algorithm
             
             ## update the test.stat object
@@ -658,7 +664,7 @@ setMethod("getSigGroups",
   
             .whichAlgorithm <- "LEA"
             attr(.whichAlgorithm, "testClass") <- as.character(class(test.stat))
-            return(new("topGOresult",
+            return(new("topONTresult",
                        description = paste(description(object),
                          "\nOntology:", ontology(object),
                          "\nneighborhood depth:", depth(test.stat), sep = " "),
@@ -670,7 +676,7 @@ setMethod("getSigGroups",
 
 
 setMethod("getSigGroups",
-          signature(object = "topGOdata", test.stat = "leaScore"),
+          signature(object = "topONTdata", test.stat = "leaScore"),
           function(object, test.stat, ...) { ## ... parameters for each algorithm
 
             ## update the test.stat object if there is the case
@@ -692,7 +698,7 @@ setMethod("getSigGroups",
             
             .whichAlgorithm <- "LEA"
             attr(.whichAlgorithm, "testClass") <- as.character(class(test.stat))
-            return(new("topGOresult",
+            return(new("topONTresult",
                        description = paste(description(object),
                          "\nOntology:", ontology(object),
                          "\nneighborhood depth:", depth(test.stat), sep = " "),
@@ -705,7 +711,7 @@ setMethod("getSigGroups",
 
 
 setMethod("getSigGroups",
-          signature(object = "topGOdata", test.stat = "leaExpr"),
+          signature(object = "topONTdata", test.stat = "leaExpr"),
           function(object, test.stat, ...) { ## ... parameters for each algorithm
             
             ## update the test.stat object if there is the case
@@ -724,7 +730,7 @@ setMethod("getSigGroups",
             
             .whichAlgorithm <- "LEA"
             attr(.whichAlgorithm, "testClass") <- as.character(class(test.stat))
-            return(new("topGOresult",
+            return(new("topONTresult",
                        description = paste(description(object),
                          "\nOntology:", ontology(object),
                          "\nneighborhood depth:", depth(test.stat), sep = " "),
@@ -1280,3 +1286,264 @@ setMethod("getSigGroups",
 
   return(newPval)
 }
+
+########################## GSEA algorithm ##########################
+setMethod("getSigGroups",
+          signature(object = "topONTdata", test.stat = "classicGsea"),
+          function(object, test.stat) {
+            #browser()
+            ## update the test.stat object if there is the case
+            if(length(allScore(test.stat)) == 0) {
+              allMembers(test.stat) <- genes(object)
+              score(test.stat) <- geneScore(object, use.names = TRUE)
+            }
+            
+            #GOlist <- genesInTerm(object)
+            #here
+            GOlist<-.genesInNode(graph(object),nodes(graph(object)),score = T)
+            ##filter by size
+            GOlist<-GOlist[which(test.stat@min.size<=sapply(GOlist,length) & sapply(GOlist,length)<=test.stat@max.size)]
+            if(length(GOlist)==0){
+              'no gene set found! Please change min.size and max.size.'
+            }
+            cat("\n\t\t\t -- Classic Algorithm -- \n")
+            cat(paste("\n\t\t the algorithm is scoring ", length(GOlist), " nontrivial nodes\n", sep =""))
+            cat("\t\t parameters: \n")
+            cat("\t\t\t test statistic: ", Name(test.stat), "\n")
+            cat("\t\t\t score order: ", ifelse(scoreOrder(test.stat), "decreasing", "increasing"), "\n")
+            
+            algoRes0 <- .sigGroups.classicGsea(GOlist, test.stat)
+            
+            report<-plot.result(A=as.matrix(object@exp),rl=algoRes0,O=test.stat@testStatPar$geneRanking,pty =object@pty,output.directory =test.stat@testStatPar$output.directory,
+                                topgs=test.stat@testStatPar$topgs,nom.p.val.threshold=test.stat@cutOff)
+            #saveRDS(report,'/tmp/1.rds')
+            #browser()
+            #####use plot here or outside?
+            algoRes <- unlist(sapply(algoRes0,function(x){x['p']},simplify = T))
+            names(algoRes) <- names(algoRes0)
+            
+            ## STORE THE RESULTS
+            .whichAlgorithm <- "classicGsea"
+            attr(.whichAlgorithm, "testClass") <- as.character(class(test.stat))
+            l=list()
+            l[[names(report[-1])[1]]]=lapply(report[-1][[1]],function(x){x$report})
+            l[[names(report[-1])[2]]]=lapply(report[-1][[2]],function(x){x$report})
+            return(new("topONTresultGSEA",
+                       description = paste(description(object), "\nOntology:", ontology(object), sep = " "),
+                       score = algoRes, testName = Name(test.stat),
+                       algorithm = .whichAlgorithm,
+                       geneData = c(.getGeneData(object), SigTerms = length(GOlist)),
+                       global.report = report$report,
+                       gs.report = l,
+                       plots = lapply(report$ALL,function(x){x$plot}),
+                       cutOff = test.stat@cutOff
+                   ))
+          })
+
+.sigGroups.classicGsea <- function(GOlist, test.stat) {
+  #browser()
+  #GOlist=GOlist[1:2]
+  #GOlist<-GOlist['DOID:1441']
+  total.gs<-length(GOlist)
+  print(paste('total gene set: ',length(GOlist),sep = ''))
+  sigList <- sapply(names(GOlist),
+                    function(x) {
+                      members(test.stat) <- as.character(GOlist[[x]])
+                      test.stat@annotation.weight <- as.numeric(names(GOlist[[x]]))
+                      names(test.stat@annotation.weight) <-members(test.stat)
+                      test.stat@testStatPar$gsname<-x
+                      print(paste(which(names(GOlist)==x),'/',total.gs,':',x,sep = ''))
+                      return(runTest(test.stat))
+                    },simplify = F)
+  #browser()
+  return(sigList)
+}
+
+
+setMethod("getSigGroups",
+          signature(object = "topONTdata", test.stat = "elimGsea"),
+          function(object, test.stat, ...) { ## ... parameters for each algorithm
+            #browser()
+            ## update the test.stat object if there is the case
+            if(length(allScore(test.stat)) == 0) {
+              allMembers(test.stat) <- genes(object)
+              score(test.stat) <- geneScore(object, use.names = TRUE)
+            }
+            
+            GOlist <- usedGO(object)
+            
+            cat("\n\t\t\t -- Elim Algorithm -- \n")
+            cat(paste("\n\t\t the algorithm is scoring ", length(GOlist), " nontrivial nodes\n", sep =""))
+            cat("\t\t parameters: \n")
+            cat("\t\t\t test statistic: ", Name(test.stat), "\n")
+            cat("\t\t\t cutOff: ", cutOff(test.stat), "\n")
+            cat("\t\t\t score order: ", ifelse(scoreOrder(test.stat), "decreasing", "increasing"), "\n")
+            
+            ## apply the algorithm
+            algoRes0 <- .sigGroups.gseaElim(graph(object), test.stat)
+            #browser()
+            ##remove those gs that has no gene in it after the elimination
+            algoRes0<-algoRes0[!sapply(algoRes0,function(x){is.na(x$ES.obs)})]
+
+            #browser()
+            report<-plot.result(A=as.matrix(object@exp),rl=algoRes0,O=test.stat@testStatPar$geneRanking,pty =object@pty,output.directory =test.stat@testStatPar$output.directory,
+                                topgs=test.stat@testStatPar$topgs,nom.p.val.threshold=test.stat@cutOff,doc.string=test.stat@testStatPar$doc.string)
+            
+            #####use plot here or outside?
+            algoRes <- unlist(sapply(algoRes0,function(x){x['p']},simplify = T))
+            names(algoRes) <- names(algoRes0)
+            #browser()
+            ## STORE THE RESULTS
+            .whichAlgorithm <- "classicGsea"
+            attr(.whichAlgorithm, "testClass") <- as.character(class(test.stat))
+            return(new("topONTresultGSEA",
+                       description = paste(description(object), "\nOntology:", ontology(object), sep = " "),
+                       score = algoRes, testName = Name(test.stat),
+                       algorithm = .whichAlgorithm,
+                       geneData = c(.getGeneData(object), SigTerms = length(GOlist)),
+                       global.report = report$report,
+                       gs.report = lapply(report$ALL,function(x){x$report}),
+                       plots = lapply(report$ALL,function(x){x$plot}),
+                       cutOff = test.stat@cutOff
+            ))
+            
+          })
+
+
+.sigGroups.gseaElim <- function(goDAG, test.stat) {
+  
+  goDAG.r2l <- reverseArch(goDAG)
+  nodeLevel <- buildLevels(goDAG.r2l, leafs2root = FALSE)
+  levelsLookUp <- nodeLevel$level2nodes
+  
+  ##adjs.cutOff <- cutOff(test.stat) / numNodes(goDAG)
+  adjs.cutOff <- cutOff(test.stat)
+  #cat(paste("\n\t\t Parameters:\t cutOff = ", adjs.cutOff, "\n", sep =""))
+  
+  ## we use a lookup table to search for nodes that have were significant
+  sigNodes.LookUP <- new.env(hash = TRUE, parent = emptyenv())
+  
+  ## hash table for the genes that we eliminate for each node
+  ## we store the genes that we want to eliminate
+  elimGenes.LookUP <- new.env(hash = TRUE, parent = emptyenv())
+  
+  ## hash table to store the result
+  sigList <- new.env(hash = TRUE, parent = emptyenv())
+  result<-list()
+  #browser()
+  for(i in nodeLevel$noOfLevels:1) {
+    currNodes.names <- get(as.character(i), envir = levelsLookUp, mode = 'character')
+    ##children.currNodes <- adj(goDAG.r2l, currNodes.names)
+    currAnno <- .genesInNode(goDAG, currNodes.names,score = T)
+    
+    .num.elimGenes <- length(unique(unlist(as.list(elimGenes.LookUP))))
+    cat(paste("\n\t Level ", i, ":\t", length(currNodes.names),
+              " nodes to be scored\t(", .num.elimGenes, " eliminated genes)\n", sep =""))
+    
+    for(termID in currNodes.names) {
+      #browser()
+      ## just in case the test.stat is modified by some methods
+      test.stat@annotation.weight<-as.numeric(names(currAnno[[termID]]))
+      names(test.stat@annotation.weight)<-currAnno[[termID]]
+      group.test <- updateGroup(test.stat, name = termID, members = unname(currAnno[[termID]]))
+      group.test@testStatPar$gsname<-termID
+      #browser()
+      ## remove the genes from the term, if there are
+      if(!exists(termID, envir = elimGenes.LookUP, mode = "character"))
+        elim(group.test) <- character(0)
+      else{
+        #browser()
+        elim(group.test) <- get(termID, envir = elimGenes.LookUP, mode = 'character')
+      }
+      #browser()
+      if(group.test@min.size<=length(group.test@members) & length(group.test@members) <= group.test@max.size){
+      ## run the test and store the result (the p-value)
+      termSig <- runTest(group.test)
+      result[[group.test@name]]<-termSig
+      assign(termID, termSig$p, envir = sigList)
+      
+      ## if we have a significant GO term 
+      if(termSig$p < adjs.cutOff) {
+        ## we mark it
+        assign(termID, termSig$p, envir = sigNodes.LookUP)
+        #browser()
+        ## we set the genes that we want to eliminate from the all ancestors
+        if(group.test@elim.gene.type=='core'){
+          ## here we want to only eliminate the 'leading core' gene from gsea
+          hits<-which(termSig$GSEA.results$indicator==1)
+          
+          if(termSig$GSEA.results$ES[1]>=0)
+            core<-hits[hits<=termSig$GSEA.results$arg.ES[1]]
+          else
+            core<-hits[hits>=termSig$GSEA.results$arg.ES[1]]
+          
+          elimGenesID<-names(group.test@testStatPar$geneRanking$s2n.m[,1][group.test@testStatPar$geneRanking$o.m[,1][core]])
+        }else{
+          ##elim all gene 
+          elimGenesID<-group.test@members
+        }
+        
+        #we assign the annotation weight to the elim genes
+        names(elimGenesID)<-group.test@annotation.weight[match(elimGenesID,group.test@members,nomatch = 0)]
+        #browser()
+        
+        ## we look for the ancestors
+        ## because we are aggrating the score, we only look for 
+        ## the direct parent instrad of all the ancestors
+        ancestors <- setdiff(nodesInInducedGraph(goDAG, termID), termID)
+        #ancestors<-adj(goDAG, termID)
+          
+        
+        
+        oldElimGenesID <- mget(ancestors, envir = elimGenes.LookUP,
+                               mode = 'character', ifnotfound = list(c()))
+        
+        ## add the new genesID to the ancestors
+        .aggregateElimScore<-function(oldElim,newElim){
+          for(i in 1:length(newElim)){
+            if(newElim[[i]] %in% oldElim){
+              old.W<-as.numeric(names(oldElim[which(oldElim==newElim[[i]])]))
+              names(oldElim)[which(oldElim==newElim[[i]])]<-sum(old.W,as.numeric(names(newElim[i])))
+            }else{
+              oldElim<-c(oldElim,newElim[i])
+            }
+          }
+          oldElim
+        }   
+        
+        newElimGenesID<-lapply(oldElimGenesID,
+                               function(termGenes) {
+                                 aux<-.aggregateElimScore(termGenes,elimGenesID)
+                                 return(aux[!is.na(aux)])
+                               })
+        
+        # if(group.test@elim.type=='score'){
+        # 
+        # }else{
+        #   newElimGenesID<-lapply(oldElimGenesID,
+        #          function(termGenes) {
+        #            aux<-union(termGenes, elimGenesID)
+        #            return(aux[!is.na(aux)])
+        #          })
+        # }
+        
+        
+        # 
+        # newElimGenesID <- lapply(oldElimGenesID,
+        #                          function(termGenes) {
+        #                            aux <- union(termGenes, elimGenesID)
+        #                            return(aux[!is.na(aux)])
+        #                          })
+        
+        
+        ## update the lookUp table
+        if(length(newElimGenesID) > 0)
+          multiassign(names(newElimGenesID), newElimGenesID, envir = elimGenes.LookUP)
+      }
+      }
+    }
+  }
+  return(result)
+  #return(unlist(as.list(sigList)))
+}
+

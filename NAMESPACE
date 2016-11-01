@@ -6,7 +6,7 @@ importFrom(lattice, densityplot, xyplot)
 
 
 
-exportClasses(topGOdata, topGOresult, groupStats,
+exportClasses(topONTdata, topONTresult, groupStats,
               classicCount, classicScore, classicExpr,
               weight01Count, weight01Score, weight01Expr,
               elimCount, elimScore, elimExpr,
@@ -38,6 +38,8 @@ export(annFUN.db, annFUN, annFUN.gene2GO, annFUN.GO2genes, annFUN.org, annFUN.fi
        GOplot, showSigOfNodes, getPvalues, showGroupDensity,
        nodesInInducedGraph, inducedGraph, 
        permSumStats, permSumStats.all,
-       .genesInNode, .countsInNode, initONT,initWHAT,mapAnnotationToSpecies.fly,list.annotation
-       #reverseArch, buildLevels,  getGraphRoot,  getNoOfLevels,
-       )
+       .genesInNode, .countsInNode, initONT,initWHAT,mapAnnotationToSpecies.fly,
+       mapAnnotationToSpecies.score.fly,list.annotation,readMappingswithScore,
+       revmapWithScore,filter.ontology.annotation,
+       reverseArch, buildLevels,  getGraphRoot,  getNoOfLevels  ,run.batch ,showSigOfNodes.batch,search.result,reorder.result,
+       GSEA.GeneRanking,read.cls,read.gct,read.gmt,annFUN.gene2GO.Score,.get.all.node.annotation,list.reference,.get.sig.gene.in.term)
